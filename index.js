@@ -11,12 +11,12 @@ const ask = require('./possibleTeams');
 
 // LOAD MY CARDS
 async function getCards() {
-    const myCards = await user.getPlayerCards(process.env.ACCOUNT.split('@')[0]) //split to prevent email use
+    const myCards = await user.getPlayerCards(process.env.USERNAME) //split to prevent email use
     return myCards;
 } 
 
 async function getQuest() {
-    return quests.getPlayerQuest(process.env.ACCOUNT.split('@')[0])
+    return quests.getPlayerQuest(process.env.USERNAME)
         .then(x=>x)
         .catch(e=>console.log('No quest data'))
 }

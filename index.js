@@ -57,13 +57,13 @@ async function startBotPlayMatch(page, myCards, quest) {
     await page.click('#menu_item_battle').catch(e=>console.log('Battle Button not available'));
 
     //if quest done claim reward
-    console.log('Quest: ', quest);
-    try {
-        await page.waitForSelector('#quest_claim_btn', { timeout: 5000 })
-            .then(button => button.click());
-    } catch (e) {
-        console.info('no quest reward to be claimed')
-    }
+    // console.log('Quest: ', quest);
+    // try {
+    //     await page.waitForSelector('#quest_claim_btn', { timeout: 5000 })
+    //         .then(button => button.click());
+    // } catch (e) {
+    //     console.info('no quest reward to be claimed')
+    // }
 
     await page.waitForTimeout(10000);
 

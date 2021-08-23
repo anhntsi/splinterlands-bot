@@ -1,3 +1,4 @@
+require('dotenv').config()
 const cards = require('./getCards.js');
 const card = require('./cards');
 const helper = require('./helper');
@@ -51,8 +52,7 @@ const summonerColor = (id) => {
     return summonerDetails ? summonerDetails[id] : '';
 }
 
-const historyBackup = require("./data/history.json");
-const splinterlavaCache = require("./data/splinterlavaCache.json");
+const historyBackup = require("./data/newHistory.json");
 const basicCards = require('./data/basicCards.js');
 const { filter } = require('./data/basicCards.js');
 
@@ -61,9 +61,10 @@ let availabilityCheck = (base, toCheck) => toCheck.slice(0, 7).every(v => base.i
 
 const getBattlesWithRuleset = (ruleset, mana) => {
     const rulesetEncoded = encodeURIComponent(ruleset);
-    const host = 'https://splinterlands-data-service.herokuapp.com/'
+    console.log(process.env.API)
+    const host = process.env.API || 'https://splinterlands-data-service.herokuapp.com/'
     //const host = 'http://localhost:3000/'
-    const url = `battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.USERNAME}`;
+    const url = `battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}`;
     console.log('API call: ', host+url)
     return fetch(host+url)
         .then(x => x && x.json())
@@ -81,23 +82,9 @@ const battlesFilterByManacap = async (mana, ruleset) => {
                 (ruleset ? battle.ruleset === ruleset : true)
         )
     }
-
-    const splinterlavaLength = splinterlavaCache && splinterlavaCache.length
     const backupLength = historyBackup && historyBackup.length
     console.log('API battles did not return ', history)
     console.log('Using Backup ', backupLength)
-    console.log('Using splinterlava cache ', splinterlavaLength)
-
-    if (splinterlavaLength > 0) {
-        let teams = splinterlavaCache.filter(
-            battle =>
-                battle.mana_cap <= mana && battle.mana_cap > mana - 5 &&
-                (ruleset ? battle.ruleset === ruleset : true)
-        )
-        if (teams.length > 0) {
-            return teams
-        }
-    }
     
     return historyBackup.filter(
         battle =>

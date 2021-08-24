@@ -64,7 +64,7 @@ const getBattlesWithRuleset = (ruleset, mana) => {
     console.log(process.env.API)
     const host = process.env.API || 'https://splinterlands-data-service.herokuapp.com/'
     //const host = 'http://localhost:3000/'
-    const url = `battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}`;
+    const url = `query?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}`;
     console.log('API call: ', host+url)
     return fetch(host+url)
         .then(x => x && x.json())

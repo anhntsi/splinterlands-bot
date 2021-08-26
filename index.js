@@ -11,12 +11,12 @@ const ask = require('./possibleTeams');
 
 // LOAD MY CARDS
 async function getCards() {
-    const myCards = await user.getPlayerCards(process.env.ACCOUNT.split('@')[0]) //split to prevent email use
+    const myCards = await user.getPlayerCards(process.env.USERNAME) //split to prevent email use
     return myCards;
 } 
 
 async function getQuest() {
-    return quests.getPlayerQuest(process.env.ACCOUNT.split('@')[0])
+    return quests.getPlayerQuest(process.env.USERNAME)
         .then(x=>x)
         .catch(e=>console.log('No quest data, splinterlands API didnt respond.'))
 }
@@ -25,9 +25,9 @@ async function startBotPlayMatch(page, myCards, quest) {
     
     console.log( new Date().toLocaleString())
     if(myCards) {
-        console.log(process.env.ACCOUNT, ' deck size: '+myCards.length)
+        console.log(process.env.USERNAME, ' deck size: '+myCards.length)
     } else {
-        console.log(process.env.ACCOUNT, ' playing only basic cards')
+        console.log(process.env.USERNAME, ' playing only basic cards')
     }
     await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/61.0.3163.100 Safari/537.36');
     await page.setViewport({
@@ -188,7 +188,7 @@ const sleepingTime = sleepingTimeInMinutes * 60000;
 (async () => {
     while (true) {
         try {
-            console.log('START ', process.env.ACCOUNT, new Date().toLocaleString())
+            console.log('START ', process.env.USERNAME, new Date().toLocaleString())
             const browser = await puppeteer.launch({
                 headless: true,
                 //args: ['--no-sandbox']
@@ -217,7 +217,7 @@ const sleepingTime = sleepingTimeInMinutes * 60000;
         } catch (e) {
             console.log('Routine error at: ', new Date().toLocaleString(), e)
         }
-        await console.log(process.env.ACCOUNT,'waiting for the next battle in', sleepingTime / 1000 / 60 , ' minutes at ', new Date(Date.now() +sleepingTime).toLocaleString() )
+        await console.log(process.env.USERNAME,'waiting for the next battle in', sleepingTime / 1000 / 60 , ' minutes at ', new Date(Date.now() +sleepingTime).toLocaleString() )
         await console.log('If you need support for the bot, join the telegram group https://t.me/splinterlandsbot and discord https://discord.gg/bR6cZDsFSX,  dont pay scammers')
         await new Promise(r => setTimeout(r, sleepingTime));
     }

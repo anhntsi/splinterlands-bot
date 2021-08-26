@@ -71,6 +71,18 @@ async function startBotPlayMatch(page, myCards, quest) {
 
     // LAUNCH the battle
     try {
+        console.log('switch to practice mode')
+        await page.waitForXPath("//*[@id=\"right_slider_btn\"]", { timeout: 20000 })
+            .then(button => {console.log('Playable mode clicked'); button.click()})
+            .catch(e=>console.error('[ERROR] waiting for Battle button. is Splinterlands in maintenance?'));
+        await page.waitForTimeout(5000);
+
+        console.log('switch to ranked mode')
+        await page.waitForXPath("//*[@id=\"right_slider_btn\"]", { timeout: 20000 })
+            .then(button => {console.log('Playable mode clicked'); button.click()})
+            .catch(e=>console.error('[ERROR] waiting for Battle button. is Splinterlands in maintenance?'));
+        await page.waitForTimeout(5000);
+
         console.log('waiting for battle button...')
         await page.waitForXPath("//button[contains(., 'BATTLE')]", { timeout: 20000 })
             .then(button => {console.log('Battle button clicked'); button.click()})
@@ -190,7 +202,7 @@ const sleepingTime = sleepingTimeInMinutes * 60000;
         try {
             console.log('START ', process.env.USERNAME, new Date().toLocaleString())
             const browser = await puppeteer.launch({
-                headless: true,
+                headless: false,
                 //args: ['--no-sandbox']
             }); // default is true
             const page = await browser.newPage();

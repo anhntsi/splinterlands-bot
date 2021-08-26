@@ -193,20 +193,20 @@ const mostWinningSummonerTankCombo = async (possibleTeams, matchDetails) => {
 
 const teamSelection = async (possibleTeams, matchDetails, quest) => {
         //check if daily quest is not completed
-        if(possibleTeams.length > 25 && quest && quest.total) {
-            const left = quest.total - quest.completed;
-            const questCheck = matchDetails.splinters.includes(quest.splinter) && left > 0;
-            const filteredTeams = possibleTeams.filter(team=>team[7]===quest.splinter)
-            console.log(left + ' battles left for the '+quest.splinter+' quest')
-            console.log('play for the quest ',quest.splinter,'? ',questCheck)
-            if(left > 0 && filteredTeams && filteredTeams.length > 10 && splinters.includes(quest.splinter)) {
-                console.log('PLAY for the quest with Teams: ',filteredTeams.length , filteredTeams)
-                const res = await mostWinningSummonerTankCombo(filteredTeams, matchDetails);
-                console.log('Play this for the quest:', res)
-                if (res[0] && res[1]) {
-                    return { summoner: res[0], cards: res[1] };
-                }
-            }
+        // if(possibleTeams.length > 25 && quest && quest.total) {
+        //     const left = quest.total - quest.completed;
+        //     const questCheck = matchDetails.splinters.includes(quest.splinter) && left > 0;
+        //     const filteredTeams = possibleTeams.filter(team=>team[7]===quest.splinter)
+        //     console.log(left + ' battles left for the '+quest.splinter+' quest')
+        //     console.log('play for the quest ',quest.splinter,'? ',questCheck)
+        //     if(left > 0 && filteredTeams && filteredTeams.length > 10 && splinters.includes(quest.splinter)) {
+        //         console.log('PLAY for the quest with Teams: ',filteredTeams.length , filteredTeams)
+        //         const res = await mostWinningSummonerTankCombo(filteredTeams, matchDetails);
+        //         console.log('Play this for the quest:', res)
+        //         if (res[0] && res[1]) {
+        //             return { summoner: res[0], cards: res[1] };
+        //         }
+        //     }
 
         //find best combination (most used)
         const res = await mostWinningSummonerTankCombo(possibleTeams, matchDetails);
@@ -214,7 +214,7 @@ const teamSelection = async (possibleTeams, matchDetails, quest) => {
         if (res[0] && res[1]) {
             return { summoner: res[0], cards: res[1] };
         }
-    }
+    // }
 
     let i = 0;
     for (i = 0; i <= possibleTeams.length - 1; i++) {

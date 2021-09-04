@@ -7,9 +7,45 @@ const mostWinningSummonerTank = (possibleTeamsList) => {
     const mostWinningSecondBackline = {};
     const mostWinningThirdBackline = {};
     const mostWinningForthBackline = {};
+    const monster4Count = possibleTeamsList.filter(x => x[4] > 0).length
+    const monster5Count = possibleTeamsList.filter(x => x[5] > 0).length
+    const monster6Count = possibleTeamsList.filter(x => x[6] > 0).length
+    let pickTeamWithNumberOfMonster = 3;
+    if (monster6Count > 25) {
+        pickTeamWithNumberOfMonster = 6;
+    } else if (monster5Count > 25) {
+        pickTeamWithNumberOfMonster = 5;
+    } else if (monster4Count > 25) {
+        pickTeamWithNumberOfMonster = 4;
+    }
+    console.log('Monster4: ', monster4Count)
+    console.log('Monster5: ', monster5Count)
+    console.log('Monster6: ', monster6Count)
+    console.log('PickTeamWithMonster: ', pickTeamWithNumberOfMonster)
     possibleTeamsList.forEach(x => {
         const summoner = x[0];
-        mostWinningSummoner[summoner] = mostWinningSummoner[summoner] ? mostWinningSummoner[summoner] + 1 : 1;
+        const monster1 = x[1];
+        const monster2 = x[2];
+        const monster3 = x[3];
+        const monster4 = x[4];
+        const monster5 = x[5];
+        const monster6 = x[6];
+
+        if (pickTeamWithNumberOfMonster == 6) {
+            if (monster1 > 0 && monster2 > 0 && monster3 > 0 && monster4 > 0 && monster5 > 0 && monster6 > 0) {
+                mostWinningSummoner[summoner] = mostWinningSummoner[summoner] ? mostWinningSummoner[summoner] + 1 : 1;
+            }
+        } else if (pickTeamWithNumberOfMonster == 5) {
+            if (monster1 > 0 && monster2 > 0 && monster3 > 0 && monster4 > 0 && monster5) {
+                mostWinningSummoner[summoner] = mostWinningSummoner[summoner] ? mostWinningSummoner[summoner] + 1 : 1;
+            }
+        } else if (pickTeamWithNumberOfMonster == 4) {
+            if (monster1 > 0 && monster2 > 0 && monster3 > 0 && monster4 > 0) {
+                mostWinningSummoner[summoner] = mostWinningSummoner[summoner] ? mostWinningSummoner[summoner] + 1 : 1;
+            }
+        } else {
+            mostWinningSummoner[summoner] = mostWinningSummoner[summoner] ? mostWinningSummoner[summoner] + 1 : 1;
+        }
     })
     const bestSummoner = Object.keys(mostWinningSummoner).length && Object.keys(mostWinningSummoner).reduce((a, b) => mostWinningSummoner[a] > mostWinningSummoner[b] ? a : b);
     console.log('BESTSUMMONER: ', bestSummoner)

@@ -5,7 +5,7 @@ const puppeteer = require('puppeteer');
 const splinterlandsPage = require('./splinterlandsPage');
 const user = require('./user');
 const card = require('./cards');
-const { clickOnElement, getElementText, teamActualSplinterToPlay } = require('./helper');
+const { clickOnElement, getElementText, getElementTextByXpath, teamActualSplinterToPlay } = require('./helper');
 const quests = require('./quests');
 const ask = require('./possibleTeams');
 const chalk = require('chalk');
@@ -23,8 +23,10 @@ async function getQuest() {
 }
 
 async function closePopups(page) {
+    console.log('check if any modal needs to be closed...')
 	if (await clickOnElement(page, '.close', 4000) ) return;
-	await clickOnElement(page, '.modal-close-new', 1000);
+	await clickOnElement(page, '.modal-close-new', 1000, 2000);
+    await clickOnElement(page, '.modal-close', 4000, 2000);
 }
 
 async function startBotPlayMatch(page, myCards, quest) {
@@ -64,6 +66,7 @@ async function startBotPlayMatch(page, myCards, quest) {
     await closePopups(page);
 
     await page.click('#menu_item_battle').then(()=>console.log('Entered...')).catch(e=>console.log('Battle Button not available'));
+    await closePopups(page);
     await page.waitForTimeout(3000);
 
     //check if season reward is available
@@ -78,7 +81,7 @@ async function startBotPlayMatch(page, myCards, quest) {
                 await page.reload();
 
             })
-            .catch(()=>console.log('no season reward to be claimed, but you can still check your data here https://peakmonsters.com/@${process.env.ACCOUNT}/explorer'));
+            .catch(()=>console.log(`no season reward to be claimed, but you can still check your data here https://peakmonsters.com/@${process.env.ACCOUNT}/explorer`));
             await page.waitForTimeout(3000);
             await page.reload();
         }
@@ -87,19 +90,29 @@ async function startBotPlayMatch(page, myCards, quest) {
         }
     }
 
-    //if quest done claim reward
+    //if quest done claim reward. default to true. to deactivate daily quest rewards claim, set CLAIM_DAILY_QUEST_REWARD false in the env file
     console.log('Quest details: ', quest);
-    try {
-        await page.waitForSelector('#quest_claim_btn', { timeout: 5000 })
-            .then(button => button.click());
-    } catch (e) {
-        console.info('no quest reward to be claimed waiting for the battle...')
+    const isClaimDailyQuestMode = process.env.CLAIM_DAILY_QUEST_REWARD === 'false' ? false : true; 
+    if (isClaimDailyQuestMode === true) {
+        try {
+            await page.waitForSelector('#quest_claim_btn', { timeout: 5000 })
+                .then(button => button.click());
+        } catch (e) {
+            console.info('no quest reward to be claimed waiting for the battle...')
+        }
     }
+
+
+
 
     await page.waitForTimeout(5000);
 
     // LAUNCH the battle
     try {
+        const ecr = await getElementTextByXpath(page, "//div[@class='dec-options'][1]/div[@class='value'][2]/div", 100);
+        if(ecr) {
+            console.log(chalk.bold.whiteBright.bgMagenta('Your current Energy Capture Rate is ' + ecr.split('.')[0] + "%"));
+        }
         console.log('waiting for battle button...')
         await page.waitForXPath("//button[contains(., 'BATTLE')]", { timeout: 20000 })
             .then(button => {console.log('Battle button clicked'); button.click()})
@@ -238,12 +251,14 @@ const isHeadlessMode = process.env.HEADLESS === 'false' ? false : true;
 
 (async () => {
     while (true) {
-        console.log(chalk.bold.whiteBright.bgBlack('If you need support for the bot, join the telegram group https://t.me/splinterlandsbot and discord https://discord.gg/bR6cZDsFSX,  dont pay scammers'));
+        console.log(chalk.bold.redBright.bgBlack('Dont pay scammers!'));
+        console.log(chalk.bold.whiteBright.bgBlack('If you need support for the bot, join the telegram group https://t.me/splinterlandsbot and discord https://discord.gg/bR6cZDsFSX'));
+        console.log(chalk.bold.greenBright.bgBlack('If you interested in a higher winning rate with the private API, contact the owner via discord or telegram'));
         try {
             console.log('START ', process.env.ACCOUNT, new Date().toLocaleString())
             const browser = await puppeteer.launch({
                 headless: isHeadlessMode,
-                //args: ['--no-sandbox']
+                args: ['--no-sandbox']
             }); // default is true
             const page = await browser.newPage();
             await page.setDefaultNavigationTimeout(500000);

@@ -61,6 +61,12 @@ async function checkMatchActiveSplinters(page) {
     return splinterUrls.map(splinter => splinterIsActive(splinter)).filter(x => x);
 }
 
+async function checkMatchRating(page) {
+    const rating = await page.$$eval("div.col-md-12 > section.bio > div.bio__details > div.bio__meta > div.rating", el => el.map(x => x.innerText));
+    const ratingValue = parseInt(rating[0], 0);
+    return ratingValue;
+}
+
 //UNUSED ?
 const splinterIsActive = (splinterUrl) => {
     const splinter = splinterUrl.split('/').slice(-1)[0].replace('.svg', '').replace('icon_splinter_', '');
@@ -72,4 +78,5 @@ exports.checkMana = checkMana;
 exports.checkMatchMana = checkMatchMana;
 exports.checkMatchRules = checkMatchRules;
 exports.checkMatchActiveSplinters = checkMatchActiveSplinters;
+exports.checkMatchRating = checkMatchRating;
 exports.splinterIsActive = splinterIsActive;

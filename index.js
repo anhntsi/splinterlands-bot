@@ -154,17 +154,19 @@ async function startBotPlayMatch(page, myCards, quest) {
 
     }
     await page.waitForTimeout(10000);
-    let [mana, rules, splinters] = await Promise.all([
+    let [mana, rules, splinters, rating] = await Promise.all([
         splinterlandsPage.checkMatchMana(page).then((mana) => mana).catch(() => 'no mana'),
         splinterlandsPage.checkMatchRules(page).then((rulesArray) => rulesArray).catch(() => 'no rules'),
-        splinterlandsPage.checkMatchActiveSplinters(page).then((splinters) => splinters).catch(() => 'no splinters')
+        splinterlandsPage.checkMatchActiveSplinters(page).then((splinters) => splinters).catch(() => 'no splinters'),
+        splinterlandsPage.checkMatchRating(page).then((splinters) => splinters).catch(() => 'no rating'),
     ]);
 
     const matchDetails = {
         mana: mana,
         rules: rules,
         splinters: splinters,
-        myCards: myCards
+        myCards: myCards,
+        rating: rating
     }
     await page.waitForTimeout(2000);
     const possibleTeams = await ask.possibleTeams(matchDetails).catch(e=>console.log('Error from possible team API call: ',e));

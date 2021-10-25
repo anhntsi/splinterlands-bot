@@ -68,7 +68,7 @@ const basicCards = require('./data/basicCards.js');
 
 let availabilityCheck = (base, toCheck) => toCheck.slice(0, 7).every(v => base.includes(v));
 
-const getBattlesWithRuleset = (ruleset, mana, summoners) => {
+const getBattlesWithRuleset = (ruleset, mana, summoners, rating) => {
     const rulesetEncoded = encodeURIComponent(ruleset);
     console.log(process.env.API)
     const host = process.env.API || 'https://splinterlands-data-service.herokuapp.com/'
@@ -77,7 +77,7 @@ const getBattlesWithRuleset = (ruleset, mana, summoners) => {
     if (process.env.API_VERSION == 2) {
         url = `V2/battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}&token=${process.env.TOKEN}&summoners=${summoners ? JSON.stringify(summoners) : ''}`;
     } else {
-        url = `battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}&token=${process.env.TOKEN}&summoners=${summoners ? JSON.stringify(summoners) : ''}`;
+        url = `battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}&token=${process.env.TOKEN}&summoners=${summoners ? JSON.stringify(summoners) : ''}&rating=${rating}`;
     }
     console.log('API call: ', host+url)
     return fetch(host+url)
@@ -86,8 +86,8 @@ const getBattlesWithRuleset = (ruleset, mana, summoners) => {
         .catch((e) => console.log('fetch ', e))
 }
 
-const battlesFilterByManacap = async (mana, ruleset, summoners) => {
-    const history = await getBattlesWithRuleset(ruleset, mana, summoners);
+const battlesFilterByManacap = async (mana, ruleset, summoners, rating) => {
+    const history = await getBattlesWithRuleset(ruleset, mana, summoners, rating);
     if (history) {
         console.log('API battles returned ', history.length)
         return history.filter(
@@ -120,7 +120,7 @@ function compare(a, b) {
     return comparison;
   }
 
-const cardsIdsforSelectedBattles = (mana, ruleset, splinters, summoners) => battlesFilterByManacap(mana, ruleset, summoners)
+const cardsIdsforSelectedBattles = (mana, ruleset, splinters, summoners, rating) => battlesFilterByManacap(mana, ruleset, summoners, rating)
     .then(x => {
         return x.map(
             (x) => {
@@ -145,8 +145,8 @@ const cardsIdsforSelectedBattles = (mana, ruleset, splinters, summoners) => batt
 const askFormation = function (matchDetails) {
     const cards = matchDetails.myCards || basicCards;
     const mySummoners = getSummoners(cards);
-    console.log('INPUT: ', matchDetails.mana, matchDetails.rules, matchDetails.splinters, cards.length)
-    return cardsIdsforSelectedBattles(matchDetails.mana, matchDetails.rules, matchDetails.splinters, mySummoners)
+    console.log('INPUT: ', matchDetails.mana, matchDetails.rules, matchDetails.splinters, cards.length, matchDetails.rating)
+    return cardsIdsforSelectedBattles(matchDetails.mana, matchDetails.rules, matchDetails.splinters, mySummoners, matchDetails.rating)
         .then(x => x.filter(
             x => availabilityCheck(cards, x))
             .map(element => element)//cards.cardByIds(element)

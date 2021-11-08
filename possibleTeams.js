@@ -77,7 +77,7 @@ const getBattlesWithRuleset = (ruleset, mana, summoners, rating) => {
     if (process.env.API_VERSION == 2) {
         url = `V2/battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}&token=${process.env.TOKEN}&summoners=${summoners ? JSON.stringify(summoners) : ''}`;
     } else {
-        url = `battlesruleset?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}&token=${process.env.TOKEN}&summoners=${summoners ? JSON.stringify(summoners) : ''}&rating=${rating}`;
+        url = `query?ruleset=${rulesetEncoded}&mana=${mana}&player=${process.env.ACCOUNT}&rating_start=1000&rating_end=1300`;
     }
     console.log('API call: ', host+url)
     return fetch(host+url)

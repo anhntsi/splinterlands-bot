@@ -10,6 +10,11 @@ const quests = require('./quests');
 const ask = require('./possibleTeams');
 const chalk = require('chalk');
 
+let totalDec = 0;
+let winTotal = 0;
+let loseTotal = 0;
+let undefinedTotal = 0;
+
 // LOAD MY CARDS
 async function getCards() {
     const myCards = await user.getPlayerCards(process.env.ACCOUNT.split('@')[0]) //split to prevent email use
@@ -30,10 +35,14 @@ async function closePopups(page) {
 }
 
 async function checkEcr(page) {
-    const ecr = await getElementTextByXpath(page, "//div[@class='dec-options'][1]/div[@class='value'][2]/div", 100);
-    if(ecr) {
-        console.log(chalk.bold.whiteBright.bgMagenta('Your current Energy Capture Rate is ' + ecr.split('.')[0] + "%"));
-        return ecr
+    try {
+        const ecr = await getElementTextByXpath(page, "//div[@class='dec-options'][1]/div[@class='value'][2]/div", 100);
+        if(ecr) {
+            console.log(chalk.bold.whiteBright.bgMagenta('Your current Energy Capture Rate is ' + ecr.split('.')[0] + "%"));
+            return parseFloat(ecr)
+        }
+    } catch (e) {
+        console.log(chalk.bold.redBright.bgBlack('ECR not defined'));
     }
 }
 
@@ -65,16 +74,29 @@ async function startBotPlayMatch(page) {
         });
     }
     
-
+    await page.goto('https://splinterlands.io/?p=battle_history');
     await page.waitForTimeout(8000);
+    await closePopups(page);
     await closePopups(page);
 
 
     const ecr = await checkEcr(page);
-    if (process.env.ECR_LIMIT && parseFloat(ecr) < process.env.ECR_LIMIT) {
-        console.log(chalk.bold.red('ECR lower than limit '+process.env.ECR_LIMIT+'%. reduce the limit in the env file config or wait the interval for the next battle'));
-        throw new Error('ECR lower than limit '+process.env.ECR_LIMIT);
-    } 
+    if(page.recoverStatus === 0) {
+        if (process.env.ECR_STOP_LIMIT && ecr < parseFloat(process.env.ECR_STOP_LIMIT)) {
+            page.recoverStatus = 1
+            console.log(chalk.bold.red(`ECR lower than limit ${process.env.ECR_STOP_LIMIT}%. reduce the limit in the env file config or wait until ECR will be at ${process.env.ECR_RECOVER_TO || '100'}%`));
+            throw new Error(`ECR lower than limit ${process.env.ECR_STOP_LIMIT}`);
+        }
+    } else {
+        if (process.env.ECR_STOP_LIMIT && process.env.ECR_RECOVER_TO && (ecr >= parseFloat(process.env.ECR_RECOVER_TO || ecr === 100))) {
+            page.recoverStatus = 0;
+            console.log(chalk.bold.red('ECR Recovered'));
+        } else {
+            console.log(chalk.bold.red(`ECR Not yet Recovered to ${process.env.ECR_RECOVER_TO}`));
+            throw new Error(`Recovery phase and ECR lower than limit ${process.env.ECR_RECOVER_TO}`);
+        }
+    }
+    
 
     console.log('getting user quest info from splinterlands API...')
     const quest = await getQuest();
@@ -92,10 +114,6 @@ async function startBotPlayMatch(page) {
     } else {
         console.log(process.env.ACCOUNT, ' playing only basic cards')
     }
-
-    await page.click('#menu_item_battle').then(()=>console.log('Entered...')).catch(e=>console.log('Battle Button not available'));
-    await closePopups(page);
-    await page.waitForTimeout(3000);
 
     //check if season reward is available
     if (process.env.CLAIM_SEASON_REWARD === 'true') {
@@ -201,7 +219,7 @@ async function startBotPlayMatch(page) {
     }
     
     //TEAM SELECTION
-    const teamToPlay = await ask.teamSelection(possibleTeams, matchDetails, quest);
+    const teamToPlay = await ask.teamSelection(possibleTeams, matchDetails, quest, page.favouriteDeck);
 
     if (teamToPlay) {
         page.click('.btn--create-team')[0];
@@ -219,8 +237,9 @@ async function startBotPlayMatch(page) {
                 page.waitForXPath(`//div[@card_detail_id="${teamToPlay.summoner}"]`, { timeout: 10000 }).then(summonerButton => summonerButton.click())
             });
         if (card.color(teamToPlay.cards[0]) === 'Gold') {
-            console.log('Dragon play TEAMCOLOR', teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6)))
-            await page.waitForXPath(`//div[@data-original-title="${teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6))}"]`, { timeout: 8000 })
+            const playTeamColor = teamActualSplinterToPlay(teamToPlay.cards.slice(0, 6)) || matchDetails.splinters[0]
+            console.log('Dragon play TEAMCOLOR', playTeamColor)
+            await page.waitForXPath(`//div[@data-original-title="${playTeamColor}"]`, { timeout: 8000 })
                 .then(selector => selector.click())
         }
         await page.waitForTimeout(5000);
@@ -251,15 +270,22 @@ async function startBotPlayMatch(page) {
 			if (winner.trim() == process.env.ACCOUNT.split('@')[0]) {
 				const decWon = await getElementText(page, '.player.winner span.dec-reward span', 1000);
 				console.log(chalk.green('You won! Reward: ' + decWon + ' DEC'));
+                totalDec += !isNaN(parseFloat(decWon)) ? parseFloat(decWon) : 0 ;
+                winTotal += 1;
 			}
 			else {
                 console.log(chalk.red('You lost'));
+                loseTotal += 1;
 			}
 		} catch {
 			console.log('Could not find winner - draw?');
+            undefinedTotal += 1;
 		}
 		await clickOnElement(page, '.btn--done', 20000, 10000);
 		await clickOnElement(page, '#menu_item_battle', 20000, 10000);
+
+        console.log('Total Battles: ' + (winTotal + loseTotal + undefinedTotal) + chalk.green(' - Win Total: ' + winTotal) + chalk.yellow(' - Draw? Total: ' + undefinedTotal) + chalk.red(' - Lost Total: ' + loseTotal));
+        console.log(chalk.green('Total Earned: ' + totalDec + ' DEC'));
         
     } catch (e) {
         throw new Error(e);
@@ -305,12 +331,13 @@ const blockedResources = [
         // '--disable-gpu',
         // '--enable-webgl',
         // '--hide-scrollbars',
-        // '--mute-audio',
+        '--mute-audio',
         // '--disable-infobars',
         // '--disable-breakpad',
         '--disable-web-security']
     }); 
-    const page = await browser.newPage();
+    //const page = await browser.newPage();
+    let [page] = await browser.pages();
 
     // NOT WORKING on ALL the machines
     // await page.setRequestInterception(true);
@@ -331,11 +358,13 @@ const blockedResources = [
         await dialog.accept();
     });
     page.goto('https://splinterlands.io/');
-    
+    page.recoverStatus = 0;
+    page.favouriteDeck = process.env.FAVOURITE_DECK || '';
     while (true) {
+        console.log('Recover Status: ', page.recoverStatus)
         console.log(chalk.bold.redBright.bgBlack('Dont pay scammers!'));
         console.log(chalk.bold.whiteBright.bgBlack('If you need support for the bot, join the telegram group https://t.me/splinterlandsbot and discord https://discord.gg/bR6cZDsFSX'));
-        console.log(chalk.bold.greenBright.bgBlack('If you interested in a higher winning rate with the private API, contact the owner via discord or telegram'));
+        console.log(chalk.bold.greenBright.bgBlack('If you interested in a higher winning rate with the private API, contact the owner via discord or telegram')); 
         try {
             await startBotPlayMatch(page)
                 .then(() => {
